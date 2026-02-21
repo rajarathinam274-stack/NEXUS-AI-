@@ -8,8 +8,6 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  LineChart,
-  Line,
   AreaChart,
   Area
 } from "recharts"
@@ -22,13 +20,12 @@ import {
 } from "@/components/ui/card"
 import { 
   Activity, 
-  CheckCircle2, 
-  Clock, 
   AlertTriangle,
   TrendingUp,
   Brain
 } from "lucide-react"
 import { StatCard } from "@/components/dashboard/StatCard"
+import { Badge } from "@/components/ui/badge"
 
 const data = [
   { name: "Mon", total: 400, success: 380, fail: 20 },
