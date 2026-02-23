@@ -1,7 +1,8 @@
+
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for creating a step-by-step workflow plan
- * from a natural language description, acting as an intelligent agent to parse user input.
+ * from a natural language description.
  *
  * - createWorkflowFromNaturalLanguage - The main function to call for generating a workflow plan.
  * - CreateWorkflowFromNaturalLanguageInput - The input type for the workflow creation process.
@@ -10,8 +11,9 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {appendToSheet, readFromSheet} from '@/ai/tools/google-sheets-tool';
 
-// Input schema for creating a workflow from natural language
+// Input schema
 const CreateWorkflowFromNaturalLanguageInputSchema = z.object({
   workflowDescription: z
     .string()
@@ -21,7 +23,7 @@ export type CreateWorkflowFromNaturalLanguageInput = z.infer<
   typeof CreateWorkflowFromNaturalLanguageInputSchema
 >;
 
-// Output schema for the generated workflow plan
+// Output schema
 const CreateWorkflowFromNaturalLanguageOutputSchema = z.object({
   workflowName: z.string().describe('A concise, descriptive name for the workflow.'),
   workflowSteps:
@@ -32,31 +34,35 @@ export type CreateWorkflowFromNaturalLanguageOutput = z.infer<
 >;
 
 /**
- * Defines a prompt to generate a structured workflow plan from a natural language description.
- * The prompt acts as an expert workflow automation engineer.
+ * Defines a prompt to generate a structured workflow plan.
+ * It is aware of the specialized agents available: Data (Sheets/Drive), 
+ * Communication (Email/Slack), Integration (Stripe/CRM), Analysis (LLM), Validation, and Recovery.
  */
 const createWorkflowFromNaturalLanguagePrompt = ai.definePrompt({
   name: 'createWorkflowFromNaturalLanguagePrompt',
   input: {schema: CreateWorkflowFromNaturalLanguageInputSchema},
   output: {schema: CreateWorkflowFromNaturalLanguageOutputSchema},
-  prompt: `You are an expert workflow automation engineer specializing in breaking down complex business processes into clear, actionable steps.
+  tools: [appendToSheet, readFromSheet],
+  prompt: `You are the Nexus AI Orchestrator. Your goal is to parse a natural language workflow request and break it down into specialized agent tasks.
 
-Your task is to take a natural language description of a business workflow and convert it into a structured, step-by-step plan.
+Available Agents:
+- Data Agent: Handles reading/writing to Google Sheets and Drive.
+- Communication Agent: Handles notifications (Slack, Email).
+- Integration Agent: Handles external APIs (Stripe, CRM).
+- Analysis Agent: Performs complex data extraction or reasoning.
+- Validation Agent: Verifies inputs and results.
+- Recovery Agent: Handles errors and retries.
 
-Follow these rules:
-1. Provide a concise, descriptive name for the workflow.
-2. Break down the workflow into an ordered list of discrete, executable steps.
-3. Each step should be clear, unambiguous, and describe a single action.
-4. Ensure the output strictly conforms to the provided JSON schema.
+Guidelines:
+1. Name the workflow clearly.
+2. Provide a logical sequence of steps.
+3. If the user mentions "database", "spreadsheet", or "sheets", identify it as a Data Agent task.
+4. Each step should be one atomic action.
 
 Workflow Description: {{{workflowDescription}}}
 `,
 });
 
-/**
- * Defines the Genkit flow for generating a workflow plan from a natural language description.
- * This flow uses the 'createWorkflowFromNaturalLanguagePrompt' to process the input.
- */
 const createWorkflowFromNaturalLanguageFlow = ai.defineFlow(
   {
     name: 'createWorkflowFromNaturalLanguageFlow',
@@ -72,13 +78,6 @@ const createWorkflowFromNaturalLanguageFlow = ai.defineFlow(
   },
 );
 
-/**
- * Creates an executable, step-by-step workflow plan from a natural language description.
- * This function serves as the public interface for the Genkit flow.
- *
- * @param input - An object containing the natural language workflow description.
- * @returns A promise that resolves to an object containing the workflow name and its steps.
- */
 export async function createWorkflowFromNaturalLanguage(
   input: CreateWorkflowFromNaturalLanguageInput,
 ): Promise<CreateWorkflowFromNaturalLanguageOutput> {
