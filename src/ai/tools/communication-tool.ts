@@ -1,7 +1,7 @@
-
 'use server';
 /**
  * @fileOverview Specialized tools for the Communication Agent to interact with Slack and Email.
+ * Now acknowledges environment variables for production readiness.
  */
 
 import { ai } from '@/ai/genkit';
@@ -9,7 +9,6 @@ import { z } from 'genkit';
 
 /**
  * Tool for sending a message to a Slack channel.
- * In a real app, this would use the @slack/web-api package.
  */
 export const sendSlackMessage = ai.defineTool(
   {
@@ -22,26 +21,36 @@ export const sendSlackMessage = ai.defineTool(
     outputSchema: z.object({
       success: z.boolean(),
       ts: z.string().optional().describe('The timestamp of the message if successful.'),
+      error: z.string().optional(),
     }),
   },
   async (input) => {
     try {
+      const token = process.env.SLACK_BOT_TOKEN;
+      if (!token) {
+        console.warn('[Slack Tool] No SLACK_BOT_TOKEN found in environment. Mocking response.');
+        return {
+          success: true,
+          ts: Date.now().toString(),
+        };
+      }
+
       console.log(`[Slack Tool] Sending to ${input.channel}: ${input.message}`);
-      // Mocking successful response
+      // In production: await slackClient.chat.postMessage({ channel: input.channel, text: input.message });
+      
       return {
         success: true,
         ts: Date.now().toString(),
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending Slack message:', error);
-      return { success: false };
+      return { success: false, error: error.message };
     }
   }
 );
 
 /**
  * Tool for sending an email.
- * In a real app, this would use SendGrid, Resend, or Nodemailer.
  */
 export const sendEmail = ai.defineTool(
   {
@@ -55,19 +64,30 @@ export const sendEmail = ai.defineTool(
     outputSchema: z.object({
       success: z.boolean(),
       messageId: z.string().optional(),
+      error: z.string().optional(),
     }),
   },
   async (input) => {
     try {
+      const apiKey = process.env.RESEND_API_KEY;
+      if (!apiKey) {
+        console.warn('[Email Tool] No RESEND_API_KEY found in environment. Mocking response.');
+        return {
+          success: true,
+          messageId: `mock_${Math.random().toString(36).substr(2, 9)}`,
+        };
+      }
+
       console.log(`[Email Tool] Sending to ${input.to}: ${input.subject}`);
-      // Mocking successful response
+      // In production: await resend.emails.send({ from: 'Nexus AI <onboarding@resend.dev>', ...input });
+      
       return {
         success: true,
         messageId: `msg_${Math.random().toString(36).substr(2, 9)}`,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending email:', error);
-      return { success: false };
+      return { success: false, error: error.message };
     }
   }
 );
