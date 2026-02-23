@@ -1,16 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { 
-  Library, 
   Search, 
-  Zap, 
-  Users, 
-  ShoppingCart, 
-  Mail, 
-  ShieldCheck, 
-  BarChart3,
   ArrowRight,
-  Plus
+  Plus,
+  Bot,
+  Loader2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,59 +20,45 @@ import {
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-
-const TEMPLATES = [
-  {
-    id: "t1",
-    name: "Customer Support Orchestrator",
-    description: "Automatically categorize support tickets, check SLA status, and route to the correct agent via Slack.",
-    category: "Customer Experience",
-    agents: ["analysis", "validation", "communication"],
-    complexity: "Medium"
-  },
-  {
-    id: "t2",
-    name: "E-commerce Order Processing",
-    description: "Verify inventory, process payment through Stripe, and generate shipping labels automatically.",
-    category: "Operations",
-    agents: ["data", "integration", "validation"],
-    complexity: "High"
-  },
-  {
-    id: "t3",
-    name: "Lead Enrichment Pipeline",
-    description: "Identify new signups, enrich data from social profiles, and create tasks in CRM.",
-    category: "Sales & Marketing",
-    agents: ["analysis", "data", "integration"],
-    complexity: "Medium"
-  },
-  {
-    id: "t4",
-    name: "Automated Invoice Auditor",
-    description: "Scan incoming PDF invoices, verify line items against POs, and flag discrepancies for review.",
-    category: "Finance",
-    agents: ["analysis", "validation", "recovery"],
-    complexity: "High"
-  },
-  {
-    id: "t5",
-    name: "Smart Meeting Transcriber",
-    description: "Record meetings, generate summaries using LLMs, and distribute action items to attendees.",
-    category: "Productivity",
-    agents: ["analysis", "communication"],
-    complexity: "Low"
-  },
-  {
-    id: "t6",
-    name: "HR Onboarding Assistant",
-    description: "Standardize employee setup: create email accounts, send welcome packs, and schedule training.",
-    category: "Human Resources",
-    agents: ["communication", "integration", "data"],
-    complexity: "Medium"
-  }
-]
+import { TEMPLATES, addWorkflowFromTemplate } from "@/app/lib/store"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 export default function TemplatesPage() {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [processingId, setProcessingId] = useState<string | null>(null)
+  const { toast } = useToast()
+  const router = useRouter()
+
+  const handleUseTemplate = async (templateId: string) => {
+    setProcessingId(templateId)
+    
+    // Simulate AI "processing" of the template
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    const newWf = addWorkflowFromTemplate(templateId)
+    
+    if (newWf) {
+      toast({
+        title: "Template Processed",
+        description: `"${newWf.name}" has been added to your workflows.`,
+      })
+      router.push("/workflows")
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not process template. Please try again.",
+      })
+      setProcessingId(null)
+    }
+  }
+
+  const filteredTemplates = TEMPLATES.filter(t => 
+    t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    t.category.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -94,7 +76,12 @@ export default function TemplatesPage() {
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search templates..." className="pl-9 bg-white" />
+          <Input 
+            placeholder="Search templates..." 
+            className="pl-9 bg-white" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="cursor-pointer">All Categories</Badge>
@@ -105,8 +92,14 @@ export default function TemplatesPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {TEMPLATES.map((template) => (
-          <Card key={template.id} className="group border-none shadow-sm hover:shadow-md transition-all flex flex-col">
+        {filteredTemplates.map((template) => (
+          <Card key={template.id} className="group border-none shadow-sm hover:shadow-md transition-all flex flex-col relative overflow-hidden">
+            {processingId === template.id && (
+              <div className="absolute inset-0 bg-primary/10 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center text-primary space-y-2">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="text-xs font-bold uppercase tracking-widest animate-pulse">Initializing Agents...</span>
+              </div>
+            )}
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
                 <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider">
@@ -137,15 +130,34 @@ export default function TemplatesPage() {
               </div>
             </CardContent>
             <CardFooter className="pt-4 border-t bg-muted/20">
-              <Button className="w-full justify-between group-hover:bg-primary group-hover:text-white transition-all" asChild>
-                <Link href="/workflows">
-                  Use Template <ArrowRight className="h-4 w-4" />
-                </Link>
+              <Button 
+                className="w-full justify-between group-hover:bg-primary group-hover:text-white transition-all"
+                onClick={() => handleUseTemplate(template.id)}
+                disabled={processingId !== null}
+              >
+                {processingId === template.id ? "Processing..." : (
+                  <>
+                    Use Template <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </Button>
             </CardFooter>
           </Card>
         ))}
       </div>
+      
+      {filteredTemplates.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+          <div className="bg-muted rounded-full p-6">
+            <Bot className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">No templates found</h3>
+            <p className="text-muted-foreground">Try adjusting your search or create a custom workflow.</p>
+          </div>
+          <Button onClick={() => setSearchQuery("")} variant="outline">Clear Search</Button>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,13 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { 
-  Plus, 
   Search, 
   Wand2, 
   MoreHorizontal, 
   Clock, 
-  ArrowRight,
   Trash2,
   Copy,
   ChevronRight,
@@ -45,11 +43,16 @@ import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 
 export default function WorkflowsPage() {
-  const [workflows, setWorkflows] = useState<Workflow[]>(getWorkflows())
+  const [workflows, setWorkflows] = useState<Workflow[]>([])
   const [isCreating, setIsCreating] = useState(false)
   const [prompt, setPrompt] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const { toast } = useToast()
+
+  // Load workflows on mount to ensure we see templates added from other pages
+  useEffect(() => {
+    setWorkflows(getWorkflows())
+  }, [])
 
   const handleCreate = async () => {
     if (!prompt.trim()) return
@@ -57,7 +60,8 @@ export default function WorkflowsPage() {
     setIsGenerating(true)
     try {
       const newWorkflow = await createWorkflowFromPrompt(prompt)
-      setWorkflows([newWorkflow, ...workflows])
+      // Since createWorkflowFromPrompt updates the internal store, we just need the latest list
+      setWorkflows(getWorkflows())
       setPrompt("")
       setIsCreating(false)
       toast({
@@ -187,6 +191,20 @@ export default function WorkflowsPage() {
           </Card>
         ))}
       </div>
+      
+      {workflows.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+          <Bot className="h-16 w-16 text-muted-foreground opacity-20" />
+          <h2 className="text-xl font-semibold">No workflows yet</h2>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Get started by creating a custom workflow with AI or browsing the template library.
+          </p>
+          <div className="flex gap-4">
+             <Button onClick={() => setIsCreating(true)}>Create Custom</Button>
+             <Button variant="outline" asChild><Link href="/templates">Browse Templates</Link></Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
