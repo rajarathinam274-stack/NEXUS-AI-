@@ -6,12 +6,13 @@ import {
   Key, 
   Shield, 
   Database, 
-  FileText, 
   CheckCircle2, 
-  AlertCircle,
   Save,
   Settings as SettingsIcon,
-  Globe
+  Globe,
+  MessageSquare,
+  CreditCard,
+  Mail
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,31 +54,25 @@ export default function SettingsPage() {
         <Card className="border-none shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" /> AI Providers
+              <Shield className="h-5 w-5 text-primary" /> AI Core Providers
             </CardTitle>
-            <CardDescription>Configure secondary LLM providers for multi-agent support.</CardDescription>
+            <CardDescription>Primary LLMs for orchestration and recovery agents.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="openai">OpenAI API Key</Label>
-              <div className="flex gap-2">
-                <Input id="openai" type="password" placeholder="sk-..." defaultValue="••••••••••••••••" />
-                <Badge variant="outline" className="text-green-600 bg-green-50 border-green-200">Connected</Badge>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="anthropic">Anthropic API Key</Label>
-              <div className="flex gap-2">
-                <Input id="anthropic" type="password" placeholder="sk-ant-..." />
-                <Badge variant="outline" className="text-muted-foreground">Not Set</Badge>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gemini">Google Gemini Key</Label>
+              <Label htmlFor="gemini">Google Gemini Key (Primary)</Label>
               <div className="flex gap-2">
                 <Input id="gemini" type="password" placeholder="AIza..." defaultValue="••••••••••••••••" />
                 <Badge variant="outline" className="text-green-600 bg-green-50 border-green-200">Active</Badge>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="openai">OpenAI API Key</Label>
+              <Input id="openai" type="password" placeholder="sk-..." />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="anthropic">Anthropic API Key</Label>
+              <Input id="anthropic" type="password" placeholder="sk-ant-..." />
             </div>
           </CardContent>
         </Card>
@@ -85,9 +80,9 @@ export default function SettingsPage() {
         <Card className="border-none shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-accent" /> Data Agent Creds
+              <Database className="h-5 w-5 text-accent" /> Data & Files
             </CardTitle>
-            <CardDescription>Authentication for Google Sheets and Drive.</CardDescription>
+            <CardDescription>Credentials for Google Sheets and Drive.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="p-3 bg-muted/30 rounded-lg border border-dashed border-muted-foreground/30">
@@ -95,42 +90,49 @@ export default function SettingsPage() {
                 <span className="text-xs font-semibold text-muted-foreground uppercase">Service Account</span>
                 <Badge variant="secondary" className="text-[10px]">credential.json detected</Badge>
               </div>
-              <p className="text-xs text-muted-foreground">Nexus AI is using the service account: <code className="bg-muted px-1 rounded">nexus-ai-bot@...iam.gserviceaccount.com</code></p>
+              <p className="text-xs text-muted-foreground">Nexus AI is using the service account for Sheets/Drive.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="sheetId">Default Spreadsheet ID</Label>
-              <Input id="sheetId" placeholder="1abc123..." defaultValue="1WqXaieQyaIQdYvTdfk..." />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="driveId">Default Drive Folder ID</Label>
-              <Input id="driveId" placeholder="folder-id-123" />
+              <Input id="sheetId" placeholder="1abc123..." />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm md:col-span-2">
+        <Card className="border-none shadow-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-blue-500" /> Integration Webhooks
+              <MessageSquare className="h-5 w-5 text-blue-500" /> Communication Agent
             </CardTitle>
-            <CardDescription>Inbound URLs for external service triggers.</CardDescription>
+            <CardDescription>Configuration for Slack and Email notifications.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-sidebar-accent/10 rounded-lg border">
-                <div>
-                  <p className="text-sm font-semibold">Stripe Events</p>
-                  <p className="text-xs text-muted-foreground">https://nexus-ai.app/api/webhooks/stripe</p>
-                </div>
-                <Button variant="ghost" size="sm">Copy URL</Button>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-sidebar-accent/10 rounded-lg border">
-                <div>
-                  <p className="text-sm font-semibold">CRM Webhooks</p>
-                  <p className="text-xs text-muted-foreground">https://nexus-ai.app/api/webhooks/crm</p>
-                </div>
-                <Button variant="ghost" size="sm">Copy URL</Button>
-              </div>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="slack">Slack Bot Token</Label>
+              <Input id="slack" type="password" placeholder="xoxb-..." />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="resend">Email Provider Key (Resend/SendGrid)</Label>
+              <Input id="resend" type="password" placeholder="re_..." />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-purple-500" /> Integration Agent
+            </CardTitle>
+            <CardDescription>Payment gateway and CRM connections.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="stripe">Stripe Secret Key</Label>
+              <Input id="stripe" type="password" placeholder="sk_test_..." />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="webhook">Stripe Webhook Secret</Label>
+              <Input id="webhook" type="password" placeholder="whsec_..." />
             </div>
           </CardContent>
         </Card>
