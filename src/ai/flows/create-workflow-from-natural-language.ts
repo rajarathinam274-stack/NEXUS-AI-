@@ -3,15 +3,12 @@
 /**
  * @fileOverview This file implements a Genkit flow for creating a step-by-step workflow plan
  * from a natural language description.
- *
- * - createWorkflowFromNaturalLanguage - The main function to call for generating a workflow plan.
- * - CreateWorkflowFromNaturalLanguageInput - The input type for the workflow creation process.
- * - CreateWorkflowFromNaturalLanguageOutput - The output type representing the generated workflow plan.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {appendToSheet, readFromSheet} from '@/ai/tools/google-sheets-tool';
+import {listDriveFiles} from '@/ai/tools/google-drive-tool';
 
 // Input schema
 const CreateWorkflowFromNaturalLanguageInputSchema = z.object({
@@ -35,18 +32,16 @@ export type CreateWorkflowFromNaturalLanguageOutput = z.infer<
 
 /**
  * Defines a prompt to generate a structured workflow plan.
- * It is aware of the specialized agents available: Data (Sheets/Drive), 
- * Communication (Email/Slack), Integration (Stripe/CRM), Analysis (LLM), Validation, and Recovery.
  */
 const createWorkflowFromNaturalLanguagePrompt = ai.definePrompt({
   name: 'createWorkflowFromNaturalLanguagePrompt',
   input: {schema: CreateWorkflowFromNaturalLanguageInputSchema},
   output: {schema: CreateWorkflowFromNaturalLanguageOutputSchema},
-  tools: [appendToSheet, readFromSheet],
+  tools: [appendToSheet, readFromSheet, listDriveFiles],
   prompt: `You are the Nexus AI Orchestrator. Your goal is to parse a natural language workflow request and break it down into specialized agent tasks.
 
 Available Agents:
-- Data Agent: Handles reading/writing to Google Sheets and Drive.
+- Data Agent: Handles reading/writing to Google Sheets and Drive. (Tools: appendToSheet, readFromSheet, listDriveFiles)
 - Communication Agent: Handles notifications (Slack, Email).
 - Integration Agent: Handles external APIs (Stripe, CRM).
 - Analysis Agent: Performs complex data extraction or reasoning.
@@ -56,7 +51,7 @@ Available Agents:
 Guidelines:
 1. Name the workflow clearly.
 2. Provide a logical sequence of steps.
-3. If the user mentions "database", "spreadsheet", or "sheets", identify it as a Data Agent task.
+3. If the user mentions "database", "spreadsheet", "sheets", or "drive", identify it as a Data Agent task.
 4. Each step should be one atomic action.
 
 Workflow Description: {{{workflowDescription}}}

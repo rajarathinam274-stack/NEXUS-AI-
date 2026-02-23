@@ -1,3 +1,4 @@
+
 "use client"
 
 import { 
@@ -33,6 +34,7 @@ export function AppSidebar() {
     { name: "Executions", icon: Play, href: "/executions" },
     { name: "Analytics", icon: BarChart3, href: "/analytics" },
     { name: "Templates", icon: Library, href: "/templates" },
+    { name: "Settings", icon: Settings, href: "/settings" },
   ]
 
   return (
